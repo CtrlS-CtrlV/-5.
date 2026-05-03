@@ -1,0 +1,44 @@
+import os
+import re
+
+
+def analyze_settings(settings_path):
+    with open(settings_path) as f:
+        content = f.read()
+
+    config = {}
+
+    debug = re.search(r'DEBUG\s*=\s*(True|False)', content)
+    config['DEBUG'] = debug.group(1) if debug else 'невідомо'
+
+    apps = re.search(r'INSTALLED_APPS\s*=\s*\[(.*?)\]', content, re.S)
+    config['INSTALLED_APPS'] = apps.group(1).split(',') if apps else []
+
+    db = re.search(r'ENGINE.*?django\.db\.backends\.(\w+)', content)
+    config['DATABASE'] = db.group(1) if db else 'невідомо'
+
+    lang = re.search(r'LANGUAGE_CODE\s*=\s*[\'"](.*?)[\'"]', content)
+    config['LANGUAGE_CODE'] = lang.group(1) if lang else ''
+
+    tz = re.search(r'TIME_ZONE\s*=\s*[\'"](.*?)[\'"]', content)
+    config['TIME_ZONE'] = tz.group(1) if tz else ''
+
+    return config
+
+
+def check_security(settings_path):
+    warnings = []
+
+    with open(settings_path) as f:
+        content = f.read()
+
+    if "DEBUG = True" in content:
+        warnings.append("DEBUG увімкнений")
+
+    if "SECRET_KEY =" in content and "os.environ" not in content:
+        warnings.append("SECRET_KEY захардкоджений")
+
+    if "ALLOWED_HOSTS = []" in content:
+        warnings.append("ALLOWED_HOSTS порожній")
+
+    return warnings
