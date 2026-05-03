@@ -1,0 +1,30 @@
+from django.http import HttpResponse
+
+
+def index(request):
+    return HttpResponse("""
+        <h1>Головна сторінка</h1>
+        <p>Це мій Django-проект</p>
+        <ul>
+            <li>Маршрутизація</li>
+            <li>Views</li>
+            <li>Templates</li>
+        </ul>
+    """)
+
+
+def about(request):
+    return HttpResponse("""
+        <h1>Про проект</h1>
+        <p>Курс: Веб-розробка</p>
+        <p>Практична №5</p>
+        <p>Студент: Ваше ім'я</p>
+    """)
+
+
+def contact(request):
+    name = request.GET.get('name')
+
+    if name:
+        return HttpResponse(f"<h1>Привіт, {name}!</h1>")
+    return HttpResponse("<h1>Контактна сторінка</h1>")
