@@ -1,0 +1,60 @@
+import subprocess
+import sys
+import json
+import os
+import importlib
+
+
+def get_installed_packages() -> list[dict]:
+    result = subprocess.run(
+        [sys.executable, '-m', 'pip', 'list', '--format=json'],
+        capture_output=True, text=True
+    )
+    return json.loads(result.stdout)
+
+
+def generate_requirements(packages: list[dict], filename='requirements.txt'):
+    excluded = {'pip', 'setuptools', 'wheel'}
+
+    with open(filename, 'w') as f:
+        for pkg in packages:
+            if pkg['name'].lower() not in excluded:
+                f.write(f"{pkg['name']}=={pkg['version']}\n")
+
+
+def verify_requirements(filename='requirements.txt') -> bool:
+    if not os.path.exists(filename):
+        print("Файл requirements.txt не знайдено")
+        return False
+
+    ok = True
+
+    with open(filename) as f:
+        for line in f:
+            name = line.strip().split('==')[0]
+            try:
+                importlib.import_module(name)
+            except ImportError:
+                print(f"✗ Відсутній пакет: {name}")
+                ok = False
+
+    return ok
+
+
+def main():
+    packages = get_installed_packages()
+
+    print(f"Знайдено {len(packages)} пакетів\n")
+
+    for pkg in packages[:10]:
+        print(f"{pkg['name']}=={pkg['version']}")
+
+    generate_requirements(packages)
+    print("\nrequirements.txt створено")
+
+    ok = verify_requirements()
+    print(f"\nПеревірка: {'✓ OK' if ok else '✗ Є помилки'}")
+
+
+if __name__ == "__main__":
+    main()
