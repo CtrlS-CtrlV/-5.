@@ -1,0 +1,59 @@
+import os
+
+
+def scan_directory(path, prefix=''):
+    tree = []
+    items = sorted(os.listdir(path))
+
+    for i, item in enumerate(items):
+        if item in ['__pycache__', 'venv', '.venv', 'db.sqlite3']:
+            continue
+
+        full = os.path.join(path, item)
+        connector = '└── ' if i == len(items)-1 else '├── '
+
+        tree.append(prefix + connector + item)
+
+        if os.path.isdir(full):
+            extension = '    ' if i == len(items)-1 else '│   '
+            tree.extend(scan_directory(full, prefix + extension))
+
+    return tree
+
+
+def analyze_project(path):
+    stats = {
+        'py_files': 0,
+        'html_files': 0,
+        'css_files': 0,
+        'total_size': 0,
+        'directories': 0,
+    }
+
+    for root, dirs, files in os.walk(path):
+        stats['directories'] += len(dirs)
+
+        for file in files:
+            full = os.path.join(root, file)
+            stats['total_size'] += os.path.getsize(full)
+
+            if file.endswith('.py'):
+                stats['py_files'] += 1
+            elif file.endswith('.html'):
+                stats['html_files'] += 1
+            elif file.endswith('.css'):
+                stats['css_files'] += 1
+
+    return stats
+
+
+def compare_projects(django_path, flask_path):
+    d = analyze_project(django_path)
+    f = analyze_project(flask_path)
+
+    print("\n| Характеристика | Django | Flask |")
+    print("|----------------|--------|-------|")
+    print(f"| .py файли      | {d['py_files']} | {f['py_files']} |")
+    print(f"| .html файли    | {d['html_files']} | {f['html_files']} |")
+    print(f"| каталоги       | {d['directories']} | {f['directories']} |")
+    print(f"| розмір (байт)  | {d['total_size']} | {f['total_size']} |")
